@@ -1,0 +1,12 @@
+{
+  "name": "node-service",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Minimal Node.js HTTP microservice",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
