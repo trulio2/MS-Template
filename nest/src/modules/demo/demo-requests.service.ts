@@ -51,31 +51,36 @@ export class DemoRequestsService {
       return
     }
 
-    const request = await this.demoRequests.findOneBy({ id: requestId })
-    if (!request) {
-      return
+    const entry = this.timelineEntry(event)
+
+    const update: Record<string, unknown> = {
+      timeline: () =>
+        `COALESCE(timeline, '[]'::jsonb) || jsonb_build_array(:entry::jsonb)`,
+      updatedAt: () => 'NOW()'
     }
 
-    const entry = this.timelineEntry(event)
-    request.timeline = [...request.timeline, entry]
-    request.updatedAt = new Date()
-
     if (event.type === 'demo.request-enriched') {
-      request.status = 'enriched'
-      request.enrichment = event.data.enrichment ?? null
+      update.status = 'enriched'
+      update.enrichment = event.data.enrichment ?? null
     }
 
     if (event.type === 'demo.request-scored') {
-      request.status = 'scored'
-      request.score = event.data.score ?? null
+      update.status = 'scored'
+      update.score = event.data.score ?? null
     }
 
     if (event.type === 'demo.request-completed') {
-      request.status = 'completed'
-      request.notification = event.data.notification ?? null
+      update.status = 'completed'
+      update.notification = event.data.notification ?? null
     }
 
-    await this.demoRequests.save(request)
+    await this.demoRequests
+      .createQueryBuilder()
+      .update(DemoRequestEntity)
+      .set(update)
+      .setParameters({ entry: JSON.stringify(entry) })
+      .where('id = :id', { id: requestId })
+      .execute()
   }
 
   private timelineEntry(event: WorkflowEvent): TimelineEntry {

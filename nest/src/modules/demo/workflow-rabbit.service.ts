@@ -18,10 +18,13 @@ export class WorkflowRabbitService implements OnModuleInit, OnModuleDestroy {
 
   constructor(private readonly demoRequests: DemoRequestsService) {}
 
+  private pending: Promise<void> = Promise.resolve()
+
   async onModuleInit(): Promise<void> {
     const url = process.env.RABBITMQ_URL ?? 'amqp://app:app@rabbitmq:5672'
     this.connection = await amqp.connect(url)
     this.channel = await this.connection.createConfirmChannel()
+    await this.channel.prefetch(1)
     await this.channel.assertExchange(EXCHANGE, 'topic', { durable: true })
     await this.channel.assertQueue(QUEUE, { durable: true })
 
@@ -33,9 +36,13 @@ export class WorkflowRabbitService implements OnModuleInit, OnModuleDestroy {
       await this.channel.bindQueue(QUEUE, EXCHANGE, eventType)
     }
 
-    await this.channel.consume(QUEUE, (message) => this.consume(message), {
-      noAck: false
-    })
+    await this.channel.consume(
+      QUEUE,
+      (message) => {
+        this.pending = this.pending.then(() => this.consume(message))
+      },
+      { noAck: false }
+    )
     this.logger.log('Connected to RabbitMQ demo workflow queue.')
   }
 
