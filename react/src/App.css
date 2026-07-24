@@ -11,7 +11,7 @@
 .eyebrow,
 .section-label {
   margin: 0;
-  color: #0f766e;
+  color: #5eead4;
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -20,7 +20,7 @@
 
 .hero h1 {
   margin: 12px 0 16px;
-  color: #102a43;
+  color: #f8fafc;
   font-size: clamp(2.3rem, 5vw, 4.5rem);
   letter-spacing: -0.06em;
   line-height: 0.98;
@@ -28,7 +28,7 @@
 
 .intro,
 .note {
-  color: #52616b;
+  color: #94a3b8;
   line-height: 1.65;
 }
 
@@ -43,10 +43,10 @@
   gap: 9px;
   margin-top: 28px;
   padding: 9px 13px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid #334155;
   border-radius: 999px;
-  background: #fff;
-  color: #334e68;
+  background: #101c2d;
+  color: #cbd5e1;
   font-size: 0.9rem;
   font-weight: 600;
 }
@@ -55,7 +55,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #0f766e;
+  background: #2dd4bf;
 }
 
 .gateway {
@@ -66,12 +66,13 @@
   margin: 48px 0 22px;
   padding: 20px 24px;
   border-radius: 14px;
-  background: #102a43;
+  border: 1px solid #1e3a5f;
+  background: linear-gradient(120deg, #102a43, #162d4b);
   color: #f0fdfa;
 }
 
 .gateway .section-label {
-  color: #99f6e4;
+  color: #5eead4;
 }
 
 code {
@@ -79,8 +80,8 @@ code {
   margin-top: 7px;
   padding: 4px 7px;
   border-radius: 5px;
-  background: #e6fffa;
-  color: #115e59;
+  background: #122a3d;
+  color: #99f6e4;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.86rem;
 }
@@ -95,7 +96,7 @@ button {
   border: 0;
   border-radius: 8px;
   padding: 10px 14px;
-  background: #14b8a6;
+  background: #2dd4bf;
   color: #042f2e;
   cursor: pointer;
   font: inherit;
@@ -104,7 +105,7 @@ button {
 }
 
 button:hover:not(:disabled) {
-  background: #5eead4;
+  background: #99f6e4;
 }
 
 button:disabled {
@@ -121,10 +122,10 @@ button:disabled {
 .service-card {
   min-height: 192px;
   padding: 22px;
-  border: 1px solid #d9e2ec;
+  border: 1px solid #243b53;
   border-radius: 14px;
-  background: #fff;
-  box-shadow: 0 12px 24px rgba(16, 42, 67, 0.05);
+  background: #101c2d;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
 }
 
 .card-heading,
@@ -137,32 +138,32 @@ button:disabled {
 
 .card-heading h2 {
   margin: 5px 0 0;
-  color: #102a43;
+  color: #f1f5f9;
   font-size: 1.35rem;
 }
 
 .status {
   padding: 5px 9px;
   border-radius: 999px;
-  background: #e2e8f0;
-  color: #475569;
+  background: #1e293b;
+  color: #cbd5e1;
   font-size: 0.75rem;
   font-weight: 700;
 }
 
 .status-online {
-  background: #ccfbf1;
-  color: #0f766e;
+  background: #134e4a;
+  color: #99f6e4;
 }
 
 .status-offline {
-  background: #fee2e2;
-  color: #b91c1c;
+  background: #7f1d1d;
+  color: #fecaca;
 }
 
 .status-checking {
-  background: #fef3c7;
-  color: #92400e;
+  background: #78350f;
+  color: #fde68a;
 }
 
 .route {
@@ -172,19 +173,19 @@ button:disabled {
 .response {
   min-height: 26px;
   margin: 16px 0;
-  color: #52616b;
+  color: #a8b8cc;
   font-size: 0.93rem;
 }
 
 .card-footer {
-  color: #829ab1;
+  color: #7f97b2;
   font-size: 0.85rem;
 }
 
 .card-footer button {
   padding: 7px 10px;
-  background: #e6fffa;
-  color: #0f766e;
+  background: #17354a;
+  color: #99f6e4;
 }
 
 .note {
