@@ -3,8 +3,8 @@
 NestJS reference service with the existing authentication and static-content modules.
 
 ```bash
-yarn install
-yarn start:dev
+npm install
+npm run start:dev
 ```
 
 The service listens on `http://localhost:3000` by default. Set `PORT` to use a different port.

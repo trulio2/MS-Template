@@ -2,6 +2,8 @@
 
 The React showcase is the browser-facing test dashboard for the microservice template. It calls each service through the Nginx gateway using same-origin `/api/...` routes.
 
+Use the **Start workflow** panel to create a demo request. The page polls NestJS for the timeline as Python enriches the request, Go scores it, and Node.js records the completion notification through RabbitMQ.
+
 ## Build for Nginx
 
 Nginx serves this project's `dist/` directory at `http://localhost:8080/`.

@@ -14,6 +14,12 @@ const initialChecks = Object.fromEntries(
 
 function App() {
   const [checks, setChecks] = useState(initialChecks)
+  const [workflow, setWorkflow] = useState(null)
+  const [workflowSubject, setWorkflowSubject] = useState(
+    'Prepare a priority customer demo'
+  )
+  const [workflowError, setWorkflowError] = useState(null)
+  const [isStartingWorkflow, setIsStartingWorkflow] = useState(false)
 
   const checkService = useCallback(async (service) => {
     setChecks((current) => ({
@@ -57,9 +63,63 @@ function App() {
     await Promise.all(services.map(checkService))
   }, [checkService])
 
+  const loadWorkflow = useCallback(async (requestId) => {
+    try {
+      const response = await fetch(`/api/nest/demo-requests/${requestId}`)
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.message ?? `HTTP ${response.status}`)
+      }
+      setWorkflow(data)
+    } catch (error) {
+      setWorkflowError(
+        error instanceof Error ? error.message : 'Unable to load workflow.'
+      )
+    }
+  }, [])
+
+  const startWorkflow = useCallback(
+    async (event) => {
+      event.preventDefault()
+      setIsStartingWorkflow(true)
+      setWorkflowError(null)
+
+      try {
+        const response = await fetch('/api/nest/demo-requests', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ subject: workflowSubject })
+        })
+        const data = await response.json()
+        if (!response.ok) {
+          throw new Error(data.message ?? `HTTP ${response.status}`)
+        }
+        setWorkflow(data)
+      } catch (error) {
+        setWorkflowError(
+          error instanceof Error ? error.message : 'Unable to start workflow.'
+        )
+      } finally {
+        setIsStartingWorkflow(false)
+      }
+    },
+    [workflowSubject]
+  )
+
   useEffect(() => {
     void checkServices()
   }, [checkServices])
+
+  useEffect(() => {
+    if (!workflow?.id || workflow.status === 'completed') {
+      return undefined
+    }
+
+    const timer = window.setInterval(() => {
+      void loadWorkflow(workflow.id)
+    }, 800)
+    return () => window.clearInterval(timer)
+  }, [loadWorkflow, workflow?.id, workflow?.status])
 
   const isChecking = Object.values(checks).some(
     (check) => check.status === 'checking'
@@ -93,6 +153,83 @@ function App() {
         </button>
       </section>
 
+      <section className="workflow-panel" aria-label="Demo request pipeline">
+        <div className="workflow-heading">
+          <div>
+            <p className="section-label">RabbitMQ workflow</p>
+            <h2>Run a demo request through every service</h2>
+            <p>
+              NestJS creates the request, Python enriches it, Go scores it, and
+              Node.js records the completion notification.
+            </p>
+          </div>
+          {workflow && (
+            <span
+              className={`workflow-status workflow-status-${workflow.status}`}
+            >
+              {workflow.status}
+            </span>
+          )}
+        </div>
+
+        <form className="workflow-form" onSubmit={startWorkflow}>
+          <label htmlFor="workflow-subject">Request subject</label>
+          <div className="workflow-controls">
+            <input
+              id="workflow-subject"
+              value={workflowSubject}
+              onChange={(event) => setWorkflowSubject(event.target.value)}
+              maxLength="120"
+              required
+            />
+            <button type="submit" disabled={isStartingWorkflow}>
+              {isStartingWorkflow ? 'Starting...' : 'Start workflow'}
+            </button>
+          </div>
+        </form>
+
+        {workflowError && <p className="workflow-error">{workflowError}</p>}
+
+        {workflow && (
+          <div className="workflow-result">
+            <div className="timeline">
+              {workflow.timeline.map((entry) => (
+                <div
+                  className="timeline-entry"
+                  key={`${entry.eventType}-${entry.occurredAt}`}
+                >
+                  <span className="timeline-marker" />
+                  <div>
+                    <strong>{entry.service}</strong>
+                    <p>{entry.message}</p>
+                  </div>
+                  <time>{new Date(entry.occurredAt).toLocaleTimeString()}</time>
+                </div>
+              ))}
+            </div>
+
+            <div className="workflow-data">
+              <div>
+                <span>Enrichment</span>
+                <strong>{workflow.enrichment?.category ?? 'Waiting'}</strong>
+              </div>
+              <div>
+                <span>Score</span>
+                <strong>
+                  {workflow.score
+                    ? `${workflow.score.value} (${workflow.score.band})`
+                    : 'Waiting'}
+                </strong>
+              </div>
+              <div>
+                <span>Notification</span>
+                <strong>{workflow.notification?.channel ?? 'Waiting'}</strong>
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
+
       <section className="service-grid" aria-label="Service checks">
         {services.map((service) => {
           const check = checks[service.id]
@@ -120,7 +257,7 @@ function App() {
                 {check.message ?? 'Run a check to call this service.'}
               </p>
               <div className="card-footer">
-                <span>{check.duration ? `${check.duration} ms` : '—'}</span>
+                <span>{check.duration ? `${check.duration} ms` : '-'}</span>
                 <button type="button" onClick={() => checkService(service)}>
                   Retry
                 </button>

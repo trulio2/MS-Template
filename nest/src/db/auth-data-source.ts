@@ -2,11 +2,12 @@ import 'dotenv/config'
 import { DataSource, DataSourceOptions } from 'typeorm'
 import { SessionEntity } from '../modules/auth/entities/session.entity'
 import { UserEntity } from '../modules/auth/entities/user.entity'
+import { DemoRequestEntity } from '../modules/demo/demo-request.entity'
 
 export const authDataSourceOptions: DataSourceOptions = {
   type: 'postgres',
   url: process.env.DATABASE_URL,
-  entities: [SessionEntity, UserEntity],
+  entities: [SessionEntity, UserEntity, DemoRequestEntity],
   synchronize: process.env.NODE_ENV !== 'production',
   ssl:
     process.env.DATABASE_SSL !== 'false'

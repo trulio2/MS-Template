@@ -3,6 +3,7 @@
 Minimal Node.js HTTP service with a `GET /` endpoint.
 
 ```bash
+npm install
 npm start
 ```
 

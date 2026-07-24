@@ -20,11 +20,14 @@ services:
       NODE_ENV: development
       DATABASE_URL: postgresql://nest:nest@postgres:5432/nest
       DATABASE_SSL: 'false'
+      RABBITMQ_URL: amqp://app:app@rabbitmq:5672
     volumes:
       - ./nest:/app
       - nest_node_modules:/app/node_modules
     depends_on:
       postgres:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
 
   node:
@@ -32,22 +35,45 @@ services:
       context: ./node
     environment:
       PORT: 3001
+      DATABASE_URL: postgresql://nest:nest@postgres:5432/nest
+      RABBITMQ_URL: amqp://app:app@rabbitmq:5672
     volumes:
       - ./node:/app
+      - node_node_modules:/app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
   python:
     build:
       context: ./python
     volumes:
       - ./python:/app
+    environment:
+      DATABASE_URL: postgresql://nest:nest@postgres:5432/nest
+      RABBITMQ_URL: amqp://app:app@rabbitmq:5672
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
   go:
     build:
       context: ./go
     environment:
       PORT: 8080
+      DATABASE_URL: postgresql://nest:nest@postgres:5432/nest
+      RABBITMQ_URL: amqp://app:app@rabbitmq:5672
     volumes:
       - ./go:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
   postgres:
     image: postgres:17-alpine
@@ -67,6 +93,9 @@ services:
 
   rabbitmq:
     image: rabbitmq:4-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: app
+      RABBITMQ_DEFAULT_PASS: app
     ports:
       - '5672:5672'
       - '15672:15672'
@@ -92,6 +121,7 @@ services:
 
 volumes:
   nest_node_modules:
+  node_node_modules:
   postgres_data:
   rabbitmq_data:
   redis_data:

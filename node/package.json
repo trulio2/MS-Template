@@ -6,6 +6,10 @@
   "scripts": {
     "start": "node src/server.js"
   },
+  "dependencies": {
+    "amqplib": "^0.10.9",
+    "pg": "^8.16.3"
+  },
   "engines": {
     "node": ">=22"
   }

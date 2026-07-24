@@ -146,6 +146,20 @@ RabbitMQ messages will use a versioned event envelope so services can evolve ind
 - A consumer owns its queue; publishers never publish directly to another service's queue.
 - Contract changes are backward compatible or introduced as a new event version.
 
+### Demo request pipeline
+
+The React showcase can start an end-to-end workflow with `POST /api/nest/demo-requests`. The request is then processed asynchronously through RabbitMQ:
+
+```text
+NestJS creates demo_requests and publishes demo.request-created
+  -> Python writes python_enrichments and publishes demo.request-enriched
+  -> Go writes go_scores and publishes demo.request-scored
+  -> Node.js writes node_notifications and publishes demo.request-completed
+  -> NestJS records the event timeline and exposes the final result to React
+```
+
+Each service owns its table and consumes its own durable queue. The shared PostgreSQL instance is a local-development convenience; services do not query one another's tables.
+
 ## Docker Compose topology
 
 The current Compose stack includes the following named services:
