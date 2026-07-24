@@ -103,6 +103,7 @@ flowchart TB
 .
 |-- docker-compose.yml              # Local applications and core infrastructure stack
 |-- nginx/                          # Nginx API gateway configuration
+|-- react/                          # React showcase application, built to dist/
 |-- nest/                           # Existing NestJS reference service
 |-- node/                           # Node.js + TypeScript service
 |-- python/                         # Python + FastAPI service
@@ -177,11 +178,19 @@ Start the full local application stack with:
 docker compose up --build
 ```
 
+Build the React showcase before starting Nginx, or whenever its source changes:
+
+```bash
+cd react
+yarn build
+```
+
 Useful local endpoints will be:
 
 | Tool                | URL                               |
 | ------------------- | --------------------------------- |
 | Nginx health        | http://localhost:8080/health      |
+| React showcase      | http://localhost:8080/            |
 | NestJS service      | http://localhost:8080/api/nest/   |
 | Node.js service     | http://localhost:8080/api/node/   |
 | Python service      | http://localhost:8080/api/python/ |

@@ -1,121 +1,141 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
+import { useCallback, useEffect, useState } from 'react'
 import './App.css'
 
+const services = [
+  { id: 'nest', name: 'NestJS', endpoint: '/api/nest/', port: '3000' },
+  { id: 'node', name: 'Node.js', endpoint: '/api/node/', port: '3001' },
+  { id: 'python', name: 'FastAPI', endpoint: '/api/python/', port: '8000' },
+  { id: 'go', name: 'Go', endpoint: '/api/go/', port: '8080' }
+]
+
+const initialChecks = Object.fromEntries(
+  services.map((service) => [service.id, { status: 'idle' }])
+)
+
 function App() {
-  const [count, setCount] = useState(0)
+  const [checks, setChecks] = useState(initialChecks)
+
+  const checkService = useCallback(async (service) => {
+    setChecks((current) => ({
+      ...current,
+      [service.id]: { status: 'checking' }
+    }))
+
+    const startedAt = performance.now()
+
+    try {
+      const response = await fetch(service.endpoint, {
+        headers: { Accept: 'application/json' }
+      })
+      const responseText = await response.text()
+      const body = responseText ? JSON.parse(responseText) : {}
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`)
+      }
+
+      setChecks((current) => ({
+        ...current,
+        [service.id]: {
+          status: 'online',
+          duration: Math.round(performance.now() - startedAt),
+          message: body.message ?? 'Service responded successfully'
+        }
+      }))
+    } catch (error) {
+      setChecks((current) => ({
+        ...current,
+        [service.id]: {
+          status: 'offline',
+          message: error instanceof Error ? error.message : 'Request failed'
+        }
+      }))
+    }
+  }, [])
+
+  const checkServices = useCallback(async () => {
+    await Promise.all(services.map(checkService))
+  }, [checkService])
+
+  useEffect(() => {
+    void checkServices()
+  }, [checkServices])
+
+  const isChecking = Object.values(checks).some(
+    (check) => check.status === 'checking'
+  )
+  const onlineCount = Object.values(checks).filter(
+    (check) => check.status === 'online'
+  ).length
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <main className="dashboard">
+      <header className="hero">
+        <p className="eyebrow">Microservice template</p>
+        <h1>Service gateway dashboard</h1>
+        <p className="intro">
+          This page is served by Nginx and calls each service through its
+          reverse-proxy route.
+        </p>
+        <div className="summary" aria-live="polite">
+          <span className="summary-dot" />
+          {onlineCount} of {services.length} services online
         </div>
+      </header>
+
+      <section className="gateway" aria-label="Gateway route information">
         <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
+          <p className="section-label">Public entry point</p>
+          <code>http://localhost:8080</code>
         </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
+        <button type="button" onClick={checkServices} disabled={isChecking}>
+          {isChecking ? 'Checking services...' : 'Check all services'}
         </button>
       </section>
 
-      <div className="ticks"></div>
+      <section className="service-grid" aria-label="Service checks">
+        {services.map((service) => {
+          const check = checks[service.id]
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
+          return (
+            <article className="service-card" key={service.id}>
+              <div className="card-heading">
+                <div>
+                  <p className="section-label">Port {service.port}</p>
+                  <h2>{service.name}</h2>
+                </div>
+                <span className={`status status-${check.status}`}>
+                  {check.status === 'online'
+                    ? 'Online'
+                    : check.status === 'offline'
+                      ? 'Unavailable'
+                      : check.status === 'checking'
+                        ? 'Checking'
+                        : 'Not checked'}
+                </span>
+              </div>
+
+              <code className="route">{service.endpoint}</code>
+              <p className="response">
+                {check.message ?? 'Run a check to call this service.'}
+              </p>
+              <div className="card-footer">
+                <span>{check.duration ? `${check.duration} ms` : '—'}</span>
+                <button type="button" onClick={() => checkService(service)}>
+                  Retry
+                </button>
+              </div>
+            </article>
+          )
+        })}
       </section>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      <p className="note">
+        API requests stay same-origin: the browser calls Nginx, and Nginx
+        forwards each request to the matching service on the internal Compose
+        network.
+      </p>
+    </main>
   )
 }
 
