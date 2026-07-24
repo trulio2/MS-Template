@@ -38,7 +38,13 @@ flowchart TB
         Grafana["Grafana\ndashboards & exploration"]
     end
 
-    Client --> Nest
+    Nginx["Nginx\nAPI gateway"]
+
+    Client --> Nginx
+    Nginx --> Nest
+    Nginx --> Node
+    Nginx --> Python
+    Nginx --> Go
     Nest <-. "HTTP, when needed" .-> Node
     Nest <-. "HTTP, when needed" .-> Python
     Nest <-. "HTTP, when needed" .-> Go
@@ -78,6 +84,7 @@ flowchart TB
 ### Shared infrastructure
 
 - **Docker Compose** - a single local development entry point for services and dependencies.
+- **Nginx** - a single HTTP entry point that routes client requests to application services.
 - **RabbitMQ** - durable asynchronous messaging. Each service consumes its own queue; events are routed through topic exchanges.
 - **Redis** - caching, idempotency keys, rate limits, locks, and other short-lived distributed state.
 
@@ -95,6 +102,7 @@ flowchart TB
 ```text
 .
 |-- docker-compose.yml              # Local applications and core infrastructure stack
+|-- nginx/                          # Nginx API gateway configuration
 |-- nest/                           # Existing NestJS reference service
 |-- node/                           # Node.js + TypeScript service
 |-- python/                         # Python + FastAPI service
@@ -141,12 +149,13 @@ RabbitMQ messages will use a versioned event envelope so services can evolve ind
 
 The current Compose stack includes the following named services:
 
-| Compose service                | Purpose                         | Host access                    |
-| ------------------------------ | ------------------------------- | ------------------------------ |
-| `nest`, `node`, `python`, `go` | Application services            | Application ports listed above |
-| `rabbitmq`                     | Event broker with management UI | `5672`, `15672`                |
-| `redis`                        | Cache and ephemeral state       | `6379`                         |
-| `postgres`                     | NestJS authentication data      | `5432`                         |
+| Compose service                | Purpose                         | Host access        |
+| ------------------------------ | ------------------------------- | ------------------ |
+| `nginx`                        | API gateway and reverse proxy   | `8080`             |
+| `nest`, `node`, `python`, `go` | Application services            | Internal via Nginx |
+| `rabbitmq`                     | Event broker with management UI | `5672`, `15672`    |
+| `redis`                        | Cache and ephemeral state       | `6379`             |
+| `postgres`                     | NestJS authentication data      | `5432`             |
 
 All containers currently join the default Compose network. Persistent named volumes are used for NestJS dependencies, PostgreSQL, RabbitMQ, and Redis data. Application source is mounted in development for fast feedback.
 
@@ -170,11 +179,15 @@ docker compose up --build
 
 Useful local endpoints will be:
 
-| Tool                | URL                    |
-| ------------------- | ---------------------- |
-| NestJS service      | http://localhost:3000  |
-| RabbitMQ Management | http://localhost:15672 |
-| PostgreSQL          | localhost:5432         |
+| Tool                | URL                               |
+| ------------------- | --------------------------------- |
+| Nginx health        | http://localhost:8080/health      |
+| NestJS service      | http://localhost:8080/api/nest/   |
+| Node.js service     | http://localhost:8080/api/node/   |
+| Python service      | http://localhost:8080/api/python/ |
+| Go service          | http://localhost:8080/api/go/     |
+| RabbitMQ Management | http://localhost:15672            |
+| PostgreSQL          | localhost:5432                    |
 
 ## Implementation order
 
