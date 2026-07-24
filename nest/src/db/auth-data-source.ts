@@ -8,7 +8,10 @@ export const authDataSourceOptions: DataSourceOptions = {
   url: process.env.DATABASE_URL,
   entities: [SessionEntity, UserEntity],
   synchronize: process.env.NODE_ENV !== 'production',
-  ssl: { rejectUnauthorized: false },
+  ssl:
+    process.env.DATABASE_SSL !== 'false'
+      ? { rejectUnauthorized: false }
+      : false,
   name: 'auth'
 }
 

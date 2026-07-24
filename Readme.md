@@ -28,6 +28,7 @@ flowchart TB
 
     Rabbit["RabbitMQ\ncommands & domain events"]
     Redis["Redis\ncache, locks & ephemeral state"]
+    Postgres["PostgreSQL\nNestJS authentication data"]
 
     subgraph Observability["Observability"]
         OTel["OpenTelemetry Collector"]
@@ -51,6 +52,7 @@ flowchart TB
     Node <--> Redis
     Python <--> Redis
     Go <--> Redis
+    Nest <--> Postgres
 
     Nest --> OTel
     Node --> OTel
@@ -92,7 +94,7 @@ flowchart TB
 
 ```text
 .
-|-- docker-compose.yml              # Local application, infrastructure, and observability stack
+|-- docker-compose.yml              # Local applications and core infrastructure stack
 |-- nest/                           # Existing NestJS reference service
 |-- node/                           # Node.js + TypeScript service
 |-- python/                         # Python + FastAPI service
@@ -137,24 +139,30 @@ RabbitMQ messages will use a versioned event envelope so services can evolve ind
 
 ## Docker Compose topology
 
-The Compose stack will include the following named services:
+The current Compose stack includes the following named services:
 
 | Compose service                | Purpose                         | Host access                    |
 | ------------------------------ | ------------------------------- | ------------------------------ |
 | `nest`, `node`, `python`, `go` | Application services            | Application ports listed above |
 | `rabbitmq`                     | Event broker with management UI | `5672`, `15672`                |
 | `redis`                        | Cache and ephemeral state       | `6379`                         |
-| `otel-collector`               | Telemetry ingestion and routing | `4317`, `4318`                 |
-| `prometheus`                   | Metrics                         | `9090`                         |
-| `loki`                         | Logs                            | Internal by default            |
-| `tempo`                        | Traces                          | Internal by default            |
-| `grafana`                      | Observability UI                | `3002`                         |
+| `postgres`                     | NestJS authentication data      | `5432`                         |
 
-All containers will join one internal Compose network. Persistent named volumes will be used for RabbitMQ, Redis, Prometheus, Loki, Tempo, and Grafana data. Application source will be mounted in development for fast feedback; production images will use multi-stage Docker builds and immutable application artifacts.
+All containers currently join the default Compose network. Persistent named volumes are used for NestJS dependencies, PostgreSQL, RabbitMQ, and Redis data. Application source is mounted in development for fast feedback.
+
+The planned observability topology is:
+
+| Compose service  | Purpose                         | Host access         |
+| ---------------- | ------------------------------- | ------------------- |
+| `otel-collector` | Telemetry ingestion and routing | `4317`, `4318`      |
+| `prometheus`     | Metrics                         | `9090`              |
+| `loki`           | Logs                            | Internal by default |
+| `tempo`          | Traces                          | Internal by default |
+| `grafana`        | Observability UI                | `3002`              |
 
 ## Planned local workflow
 
-Once `docker-compose.yml` is implemented, the normal workflow will be:
+Start the full local application stack with:
 
 ```bash
 docker compose up --build
@@ -166,8 +174,7 @@ Useful local endpoints will be:
 | ------------------- | ---------------------- |
 | NestJS service      | http://localhost:3000  |
 | RabbitMQ Management | http://localhost:15672 |
-| Prometheus          | http://localhost:9090  |
-| Grafana             | http://localhost:3002  |
+| PostgreSQL          | localhost:5432         |
 
 ## Implementation order
 
