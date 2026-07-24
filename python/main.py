@@ -10,6 +10,9 @@ from fastapi import FastAPI
 
 app = FastAPI(title="Python Service")
 
+from otel import init_telemetry
+init_telemetry(app)
+
 DATABASE_URL = os.getenv("DATABASE_URL", "")
 RABBITMQ_URL = os.getenv("RABBITMQ_URL", "amqp://app:app@rabbitmq:5672")
 EXCHANGE = "demo.events"

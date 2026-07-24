@@ -2,9 +2,8 @@ FROM golang:1.24-alpine
 
 WORKDIR /app
 
-COPY go.mod ./
-RUN go mod download
-COPY main.go ./
+COPY . .
+RUN go mod tidy
 
 EXPOSE 8080
 

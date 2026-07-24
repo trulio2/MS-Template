@@ -39,6 +39,13 @@ func main() {
 		port = "8080"
 	}
 
+	cleanup, err := initTracer(context.Background())
+	if err != nil {
+		log.Printf("Warning: unable to init OTel tracer: %v", err)
+	} else {
+		defer cleanup()
+	}
+
 	if err := startWorkflowConsumer(); err != nil {
 		log.Fatal("Unable to start Go workflow consumer: ", err)
 	}

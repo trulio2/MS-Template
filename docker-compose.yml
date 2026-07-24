@@ -21,6 +21,11 @@ services:
       DATABASE_URL: postgresql://nest:nest@postgres:5432/nest
       DATABASE_SSL: 'false'
       RABBITMQ_URL: amqp://app:app@rabbitmq:5672
+      OTEL_SERVICE_NAME: nest
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_RESOURCE_ATTRIBUTES: 'service.name=nest,service.version=1.0.0'
+      OTEL_METRICS_EXPORTER: otlproto
+      OTEL_LOGS_EXPORTER: otlproto
     volumes:
       - ./nest:/app
       - nest_node_modules:/app/node_modules
@@ -29,6 +34,8 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
 
   node:
     build:
@@ -37,6 +44,9 @@ services:
       PORT: 3001
       DATABASE_URL: postgresql://nest:nest@postgres:5432/nest
       RABBITMQ_URL: amqp://app:app@rabbitmq:5672
+      OTEL_SERVICE_NAME: node
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_RESOURCE_ATTRIBUTES: 'service.name=node,service.version=1.0.0'
     volumes:
       - ./node:/app
       - node_node_modules:/app/node_modules
@@ -45,6 +55,8 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
 
   python:
     build:
@@ -54,11 +66,16 @@ services:
     environment:
       DATABASE_URL: postgresql://nest:nest@postgres:5432/nest
       RABBITMQ_URL: amqp://app:app@rabbitmq:5672
+      OTEL_SERVICE_NAME: python
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_RESOURCE_ATTRIBUTES: 'service.name=python,service.version=1.0.0'
     depends_on:
       postgres:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
 
   go:
     build:
@@ -67,13 +84,68 @@ services:
       PORT: 8080
       DATABASE_URL: postgresql://nest:nest@postgres:5432/nest
       RABBITMQ_URL: amqp://app:app@rabbitmq:5672
-    volumes:
-      - ./go:/app
+      OTEL_SERVICE_NAME: go
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_RESOURCE_ATTRIBUTES: 'service.name=go,service.version=1.0.0'
     depends_on:
       postgres:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.121.0
+    command: ['--config=/etc/otelcol/config.yml']
+    volumes:
+      - ./observability/otel-collector/config.yml:/etc/otelcol/config.yml:ro
+    ports:
+      - '4317:4317'
+      - '4318:4318'
+      - '8889:8889'
+
+  prometheus:
+    image: prom/prometheus:v3.0.0
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - '9090:9090'
+
+  loki:
+    image: grafana/loki:3.3.0
+    command: ['--config.file=/etc/loki/loki.yml']
+    volumes:
+      - ./observability/loki/loki.yml:/etc/loki/loki.yml:ro
+      - loki_data:/loki
+    ports:
+      - '3100:3100'
+
+  tempo:
+    image: grafana/tempo:2.7.1
+    command: ['--config.file=/etc/tempo/tempo.yml']
+    volumes:
+      - ./observability/tempo/tempo.yml:/etc/tempo/tempo.yml:ro
+    ports:
+      - '3200:3200'
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: 'true'
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
+    ports:
+      - '3002:3000'
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
 
   postgres:
     image: postgres:17-alpine
@@ -125,3 +197,6 @@ volumes:
   postgres_data:
   rabbitmq_data:
   redis_data:
+  prometheus_data:
+  loki_data:
+  grafana_data:

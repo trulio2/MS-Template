@@ -1,3 +1,4 @@
+require('./otel')
 const amqp = require('amqplib')
 const { randomUUID } = require('node:crypto')
 const http = require('node:http')
